@@ -1,19 +1,19 @@
 package main
 
 import (
-	"strings"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/url"
 	"net/http"
+	"net/url"
 	"os"
-	"strconv"
-	"time"
 	"path"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -126,7 +126,7 @@ var (
 		},
 		[]string{"activityId", "definitionKey", "definitionId", "definitionVersion"},
 	)
-	
+
 	processActivityFailedJobsCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "camunda_process_activity_failed_jobs_total",
@@ -134,7 +134,7 @@ var (
 		},
 		[]string{"activityId", "definitionKey", "definitionId", "definitionVersion"},
 	)
-	
+
 	historyProcessActivityInstancesCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "camunda_history_process_activity_instances_total",
@@ -357,7 +357,7 @@ func collectProcessDefinitionActivities(processDefinition ProcessDefinition) err
 			"definitionId":      processDefinition.Id,
 			"definitionKey":     processDefinition.Key,
 			"definitionVersion": strconv.Itoa(processDefinition.Version)}
-	
+
 		processActivityInstancesCounter.With(labels).Set(float64(stat.Instances))
 		processActivityFailedJobsCounter.With(labels).Set(float64(stat.FailedJobs))
 		if verbose {
@@ -381,7 +381,7 @@ func collectProcessDefinitionActivities(processDefinition ProcessDefinition) err
 				"definitionId":      processDefinition.Id,
 				"definitionKey":     processDefinition.Key,
 				"definitionVersion": strconv.Itoa(processDefinition.Version)}
-		
+
 			historyProcessActivityInstancesCounter.With(labels).Set(float64(historyStat.Instances))
 			historyProcessActivityCanceledCounter.With(labels).Set(float64(historyStat.Canceled))
 			historyProcessActivityFinishedCounter.With(labels).Set(float64(historyStat.Finished))
@@ -389,7 +389,7 @@ func collectProcessDefinitionActivities(processDefinition ProcessDefinition) err
 			if verbose {
 				//log.Printf("%s: %d instances / %d failedJobs\n", stat.Definition, stat.Instances, stat.FailedJobs)
 			}
-		}	
+		}
 	}
 
 	return nil
@@ -397,7 +397,7 @@ func collectProcessDefinitionActivities(processDefinition ProcessDefinition) err
 
 func collectProcessDefinitionStatistics() error {
 	var stats []ProcessDefinitionStatisticsResult
-	err := measureTime("fetchProcessDefinitionStatistics", func () error {
+	err := measureTime("fetchProcessDefinitionStatistics", func() error {
 		var err error
 		stats, err = fetchProcessDefinitionStatistics()
 		return err
@@ -435,7 +435,7 @@ func collectProcessDefinitionStatistics() error {
 		if verbose {
 			//log.Printf("%s: %d instances / %d failedJobs\n", stat.Definition, stat.Instances, stat.FailedJobs)
 		}
-		err = measureTime("collectProcessDefinitionActivities", func () error {
+		err = measureTime("collectProcessDefinitionActivities", func() error {
 			return collectProcessDefinitionActivities(stat.Definition)
 		})
 		if err != nil {
@@ -446,9 +446,9 @@ func collectProcessDefinitionStatistics() error {
 }
 
 func fetchForShortTimer() error {
-	return measureTime("fetchForShortTimer", func () error {
+	return measureTime("fetchForShortTimer", func() error {
 		if shouldFetchHistory {
-			err := measureTime("collectHistoryIncidents", func () error {
+			err := measureTime("collectHistoryIncidents", func() error {
 				return collectHistoryIncidents("open", "deleted", "resolved")
 			})
 			if err != nil {
@@ -456,7 +456,7 @@ func fetchForShortTimer() error {
 			}
 		}
 		if shouldFetchRuntime {
-			err := measureTime("collectProcessDefinitionStatistics", func () error {
+			err := measureTime("collectProcessDefinitionStatistics", func() error {
 				return collectProcessDefinitionStatistics()
 			})
 			if err != nil {
@@ -469,7 +469,7 @@ func fetchForShortTimer() error {
 
 func fetchForLongTimer() error {
 	if shouldFetchMetrics {
-		return measureTime("fetchForLongTimer", func () error {
+		return measureTime("fetchForLongTimer", func() error {
 			_, errMetrics := collectMetrics()
 			if errMetrics != nil {
 				return errMetrics
@@ -480,15 +480,15 @@ func fetchForLongTimer() error {
 	return nil
 }
 
-func measureTime(name string, action func () error) error {
-	if(verbose) {
+func measureTime(name string, action func() error) error {
+	if verbose {
 		log.Printf("------> Measuring %s", name)
 	}
 	start := time.Now()
 	err := action()
 	elapsed := time.Since(start)
 	scrapeDurationCounter.With(prometheus.Labels{"name": name}).Set(elapsed.Seconds())
-	if(verbose) {
+	if verbose {
 		log.Printf("======> Elapsed time for %s scrape: %s", name, elapsed)
 	}
 	return err
@@ -558,7 +558,7 @@ func main() {
 		}()
 		defer longTicker.Stop()
 	}
-	
+
 	// The Handler function provides a default handler to expose metrics
 	// via an HTTP server. "/metrics" is the usual endpoint for that.
 	http.Handle("/metrics", promhttp.Handler())
